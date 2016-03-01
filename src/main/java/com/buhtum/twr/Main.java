@@ -5,9 +5,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import twitter4j.Twitter;
-import twitter4j.TwitterException;
-import twitter4j.TwitterFactory;
+import twitter4j.*;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
@@ -53,17 +51,46 @@ public class Main {
                 int delay = (Seconds.secondsBetween(DateTime.now(), newTime)).getSeconds();
                 log.debug("Scheduled tweet from " + tweet.getTimestamp() + " for " + newTime + " (" + delay + " seconds)");
                 scheduler.schedule(
-                        () -> {
-                            try {
-                                if (tweet.getRetweetedStatusId() != null) {
-                                    log.debug("Retweeting: " + tweet.getText());
-                                    twitter.retweetStatus(tweet.getRetweetedStatusId());
-                                } else {
-                                    log.debug("Tweeting: " + tweet.getText());
-                                    twitter.updateStatus(tweet.getText());
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    if (tweet.getInReplyToStatusId() == null && tweet.getInReplyToUserId() == null) {
+                                        if (tweet.getRetweetedStatusId() != null) {
+                                            log.debug("Retweeting: " + tweet.getText());
+                                            twitter.retweetStatus(tweet.getRetweetedStatusId());
+                                        } else {
+                                            log.debug("Tweeting: " + tweet.getText());
+                                            twitter.updateStatus(tweet.getText());
+                                        }
+                                    }
+                                    try {
+                                        TimeUnit.SECONDS.sleep(10);
+                                    } catch (InterruptedException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                    if (tweet.getInReplyToUserId() != null) {
+                                        tryFollowing(twitter, tweet.getInReplyToUserId());
+                                    }
+                                    if (tweet.getRetweetedStatusUserId() != null) {
+                                        tryFollowing(twitter, tweet.getRetweetedStatusUserId());
+                                    }
+
+                                } catch (TwitterException e) {
+                                    throw new RuntimeException(e);
                                 }
-                            } catch (TwitterException e) {
-                                throw new RuntimeException(e);
+                            }
+
+                            private void tryFollowing(Twitter twitter, long userId) throws TwitterException {
+                                final ResponseList<Friendship> friendships = twitter.lookupFriendships(userId);
+                                for (Friendship friendship : friendships) {
+                                    if (!friendship.isFollowing()) {
+                                        log.debug("Following: " + friendship.getScreenName());
+                                        twitter.createFriendship(friendship.getId(), true);
+                                    } else {
+                                        log.debug("Already following: " + friendship.getScreenName());
+                                    }
+                                }
                             }
                         },
                         delay,

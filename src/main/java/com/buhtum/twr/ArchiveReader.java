@@ -55,9 +55,7 @@ public class ArchiveReader {
             };
             Tweet tweet;
             while ((tweet = reader.read(Tweet.class, header, cellProcessors)) != null) {
-                if (tweet.getInReplyToStatusId() == null && tweet.getInReplyToUserId() == null) {
-                    builder.add(tweet);
-                }
+                builder.add(tweet);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
