@@ -72,6 +72,11 @@ public class Main {
                                     if (tweet.getInReplyToUserId() != null) {
                                         tryFollowing(twitter, tweet.getInReplyToUserId());
                                     }
+                                    try {
+                                        TimeUnit.SECONDS.sleep(10);
+                                    } catch (InterruptedException e) {
+                                        throw new RuntimeException(e);
+                                    }
                                     if (tweet.getRetweetedStatusUserId() != null) {
                                         tryFollowing(twitter, tweet.getRetweetedStatusUserId());
                                     }
