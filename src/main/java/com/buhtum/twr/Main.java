@@ -14,6 +14,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +51,7 @@ public class Main {
             final DateTime newTime = tweet.getTimestamp().plusYears(5);
             if (newTime.isAfter(now)) {
                 int delay = (Seconds.secondsBetween(DateTime.now(), newTime)).getSeconds();
-                log.debug("Scheduled tweet from " + tweet.getTimestamp() + " for " + newTime + " (" + delay + " seconds)");
+                log.debug("Scheduled tweet from " + tweet.getTimestamp() + " for " + newTime + " (" + delay + " seconds): " + tweet.getText());
                 scheduler.schedule(
                         new Runnable() {
                             @Override
@@ -102,6 +104,38 @@ public class Main {
                         TimeUnit.SECONDS);
             }
         }
+
+        final Timer followFollowers = new Timer();
+        final DateTime start = new DateTime().withTimeAtStartOfDay().plusHours(10);
+        log.info("Started follow back users, starting: " + start);
+        followFollowers.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                followFollowers();
+            }
+        }, start.toDate(), TimeUnit.DAYS.toMillis(1));
+    }
+
+    private static void followFollowers() {
+        try {
+            followFollowers(-1);
+        } catch (TwitterException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void followFollowers(long cursor) throws TwitterException {
+        final Twitter twitter = getInstance();
+        final IDs followersIDs = twitter.getFollowersIDs(cursor);
+        for (Friendship friendship : twitter.lookupFriendships(followersIDs.getIDs())) {
+            if (!friendship.isFollowing()) {
+                log.debug("Following: " + friendship.getScreenName());
+                twitter.createFriendship(friendship.getId(), true);
+            } else {
+                log.debug("Already following: " + friendship.getScreenName());
+            }
+        }
+        if (followersIDs.hasNext()) followFollowers(followersIDs.getNextCursor());
     }
 
 
