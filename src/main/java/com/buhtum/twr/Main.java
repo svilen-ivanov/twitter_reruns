@@ -106,9 +106,9 @@ public class Main {
         }
 
         final Timer followFollowers = new Timer();
-        final DateTime start = new DateTime().withTimeAtStartOfDay().plusHours(10);
+        final DateTime start = new DateTime().withTimeAtStartOfDay().plusDays(1).plusHours(10);
         log.info("Started follow back users, starting: " + start);
-        followFollowers.schedule(new TimerTask() {
+        followFollowers.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 followFollowers();
@@ -118,6 +118,7 @@ public class Main {
 
     private static void followFollowers() {
         try {
+            log.debug("Checking daily followers...");
             followFollowers(-1);
         } catch (TwitterException e) {
             throw new RuntimeException(e);
