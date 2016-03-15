@@ -106,7 +106,7 @@ public class Main {
         }
 
         final Timer followFollowers = new Timer();
-        final DateTime start = new DateTime().withTimeAtStartOfDay().plusDays(1).plusHours(10);
+        final DateTime start = new DateTime().withTimeAtStartOfDay().plusDays(1).plusHours(6);
         log.info("Started follow back users, starting: " + start);
         followFollowers.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -132,6 +132,11 @@ public class Main {
             if (!friendship.isFollowing()) {
                 log.debug("Following: " + friendship.getScreenName());
                 twitter.createFriendship(friendship.getId(), true);
+                try {
+                    TimeUnit.MINUTES.sleep(13);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             } else {
                 log.debug("Already following: " + friendship.getScreenName());
             }
