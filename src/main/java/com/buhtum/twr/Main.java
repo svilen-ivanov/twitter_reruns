@@ -1,6 +1,7 @@
 package com.buhtum.twr;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Properties;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
@@ -32,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 public class Main {
 
     private final static Logger log = LoggerFactory.getLogger(Main.class);
-
+    private final static Set<Long> isFollowing = Sets.newConcurrentHashSet();
 
     public static void main(String[] args) {
         final Twitter twitter = getInstance();
@@ -89,11 +91,13 @@ public class Main {
                             }
 
                             private void tryFollowing(Twitter twitter, long userId) throws TwitterException {
+                                if (isFollowing.contains(userId)) return;
                                 final ResponseList<Friendship> friendships = twitter.lookupFriendships(userId);
                                 for (Friendship friendship : friendships) {
                                     if (!friendship.isFollowing()) {
                                         log.debug("Following: " + friendship.getScreenName());
                                         twitter.createFriendship(friendship.getId(), true);
+                                        isFollowing.add(friendship.getId());
                                     } else {
                                         log.debug("Already following: " + friendship.getScreenName());
                                     }
@@ -140,6 +144,7 @@ public class Main {
             } else {
                 log.debug("Already following: " + friendship.getScreenName());
             }
+            isFollowing.add(friendship.getId());
         }
         if (followersIDs.hasNext()) followFollowers(followersIDs.getNextCursor());
     }
