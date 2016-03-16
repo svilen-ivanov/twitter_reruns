@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import twitter4j.*;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
+import twitter4j.conf.Configuration;
+import twitter4j.conf.PropertyConfiguration;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -38,8 +40,10 @@ public class Main {
 
     public static void main(String[] args) {
         final Twitter twitter = getInstance();
+        final String screenName;
         try {
-            log.debug(String.valueOf(twitter.getScreenName()));
+            screenName = twitter.getScreenName();
+            log.debug(String.valueOf(screenName));
         } catch (TwitterException e) {
             throw new RuntimeException();
         }
@@ -118,6 +122,10 @@ public class Main {
                 followFollowers();
             }
         }, start.toDate(), TimeUnit.DAYS.toMillis(1));
+
+        TwitterStream stream = getStreamInstance();
+        stream.addListener(new WittyResponse(twitter, screenName));
+        stream.user();
     }
 
     private static void followFollowers() {
@@ -179,7 +187,29 @@ public class Main {
                 twitter.setOAuthAccessToken(new AccessToken(accessTokenStr, accessTokenSecret));
             }
 
+            return twitter;
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
+    }
 
+    public static TwitterStream getStreamInstance() {
+
+        try {
+            final String configFile = System.getProperty("auth");
+            Properties twitterConfig = loadConfig(configFile);
+
+            Configuration c = new PropertyConfiguration(twitterConfig);
+            log.debug("isUserStreamRepliesAllEnabled={}", c.isUserStreamRepliesAllEnabled());
+
+            TwitterStream twitter = new TwitterStreamFactory(c).getInstance();
+            twitter.setOAuthConsumer(
+                    twitterConfig.getProperty("twitter4j.oauth.consumerKey"),
+                    twitterConfig.getProperty("twitter4j.oauth.consumerSecret"));
+
+            final String accessTokenStr = twitterConfig.getProperty("twitter4j.oauth.accessToken");
+            final String accessTokenSecret = twitterConfig.getProperty("twitter4j.oauth.accessToken.secret");
+            twitter.setOAuthAccessToken(new AccessToken(accessTokenStr, accessTokenSecret));
             return twitter;
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
