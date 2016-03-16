@@ -30,6 +30,8 @@ public class WittyResponse extends UserStreamAdapter {
 
     @Override
     public void onStatus(Status status) {
+        if (status.getRetweetedStatus() != null) return;
+
         for (UserMentionEntity mention : status.getUserMentionEntities()) {
             if (mention.getScreenName().equalsIgnoreCase(screenName)) {
                 log.debug("Mentioned in: {}", status);
@@ -47,6 +49,7 @@ public class WittyResponse extends UserStreamAdapter {
                         log.error("Failed to reply to: " + status);
                     }
                 }
+                break;
             }
         }
     }
