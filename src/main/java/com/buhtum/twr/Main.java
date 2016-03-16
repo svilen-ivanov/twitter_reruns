@@ -135,7 +135,12 @@ public class Main {
         for (Friendship friendship : twitter.lookupFriendships(followersIDs.getIDs())) {
             if (!friendship.isFollowing()) {
                 log.debug("Following: " + friendship.getScreenName());
-                twitter.createFriendship(friendship.getId(), true);
+                try {
+                    twitter.createFriendship(friendship.getId(), true);
+                } catch (Exception e) {
+                    log.error("Failed to create friendship with " + friendship.getScreenName(), e);
+                    continue;
+                }
                 try {
                     TimeUnit.MINUTES.sleep(13);
                 } catch (InterruptedException e) {
