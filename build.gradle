@@ -22,7 +22,7 @@ apply plugin: 'com.github.ben-manes.versions'
 // group is the groupId
 group = 'com.buhtum.twr'
 //the default artifactId is the project name, which is per default the directory name of the project
-version = '0.0.4-SNAPSHOT'
+version = '0.0.5-SNAPSHOT'
 
 description = """A bootstrap Java project with gradle, TestNG, Mockito, FEST-Assert 2 and Cobertura for Eclipse and Jenkins"""
 
