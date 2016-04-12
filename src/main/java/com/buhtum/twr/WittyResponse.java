@@ -38,7 +38,7 @@ public class WittyResponse extends UserStreamAdapter {
         for (URLEntity urlEntity : status.getURLEntities()) {
             final String text = urlEntity.getText();
             if (text == null) continue;
-            if (text.contains(".gif")) {
+            if (text.toLowerCase().contains(".gif")) {
                 log.debug("Found gif mention: {} in status {}", urlEntity, status);
                 break;
             }
