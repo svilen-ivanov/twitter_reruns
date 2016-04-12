@@ -30,26 +30,42 @@ public class WittyResponse extends UserStreamAdapter {
 
     @Override
     public void onStatus(Status status) {
-        if (status.getRetweetedStatus() != null) return;
+        checkForMentions(status);
+        checkForGifs(status);
+    }
 
-        for (UserMentionEntity mention : status.getUserMentionEntities()) {
-            if (mention.getScreenName().equalsIgnoreCase(screenName)) {
-                log.debug("Mentioned in: {}", status);
-
-                final String randomGif = this.giphy.findRandomGif();
-                if (randomGif != null) {
-                    String response = responses.get(random.nextInt(responses.size()));
-                    StatusUpdate reply = new StatusUpdate("@" + status.getUser().getScreenName() + " " + String.format(response, randomGif));
-                    reply.setInReplyToStatusId(status.getId());
-                    log.debug("Replying with: {}", reply);
-
-                    try {
-                        twitter.updateStatus(reply);
-                    } catch (TwitterException e) {
-                        log.error("Failed to reply to: " + status);
-                    }
-                }
+    private void checkForGifs(Status status) {
+        for (URLEntity urlEntity : status.getURLEntities()) {
+            final String text = urlEntity.getText();
+            if (text == null) continue;
+            if (text.contains(".gif")) {
+                log.debug("Found gif mention: {} in status {}", urlEntity, status);
                 break;
+            }
+        }
+    }
+
+    private void checkForMentions(Status status) {
+        if (status.getRetweetedStatus() == null) {
+            for (UserMentionEntity mention : status.getUserMentionEntities()) {
+                if (mention.getScreenName().equalsIgnoreCase(screenName)) {
+                    log.debug("Mentioned in: {}", status);
+
+                    final String randomGif = this.giphy.findRandomGif();
+                    if (randomGif != null) {
+                        String response = responses.get(random.nextInt(responses.size()));
+                        StatusUpdate reply = new StatusUpdate("@" + status.getUser().getScreenName() + " " + String.format(response, randomGif));
+                        reply.setInReplyToStatusId(status.getId());
+                        log.debug("Replying with: {}", reply);
+
+                        try {
+                            twitter.updateStatus(reply);
+                        } catch (TwitterException e) {
+                            log.error("Failed to reply to: " + status);
+                        }
+                    }
+                    break;
+                }
             }
         }
     }
@@ -58,4 +74,6 @@ public class WittyResponse extends UserStreamAdapter {
     public void onException(Exception ex) {
         log.error("Oops", ex);
     }
+
+
 }
