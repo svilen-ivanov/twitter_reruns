@@ -67,7 +67,7 @@ public class Main {
                                         if (tweet.getRetweetedStatusId() != null) {
                                             log.debug("Retweeting: " + tweet.getText());
                                             twitter.retweetStatus(tweet.getRetweetedStatusId());
-                                        } else {
+                                        } else if (!tweet.getText().startsWith("@")){
                                             log.debug("Tweeting: " + tweet.getText());
                                             twitter.updateStatus(tweet.getText());
                                         }
