@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
+import org.jsoup.parser.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.*;
@@ -57,7 +58,8 @@ public class Main {
             final DateTime newTime = tweet.getTimestamp().plusYears(5);
             if (newTime.isAfter(now)) {
                 int delay = (Seconds.secondsBetween(DateTime.now(), newTime)).getSeconds();
-                log.debug("Scheduled tweet from " + tweet.getTimestamp() + " for " + newTime + " (" + delay + " seconds): " + tweet.getText());
+                final String text = Parser.unescapeEntities(tweet.getText(), false);
+                log.debug("Scheduled tweet from " + tweet.getTimestamp() + " for " + newTime + " (" + delay + " seconds): " + text);
                 scheduler.schedule(
                         new Runnable() {
                             @Override
@@ -65,11 +67,11 @@ public class Main {
                                 try {
                                     if (tweet.getInReplyToStatusId() == null && tweet.getInReplyToUserId() == null) {
                                         if (tweet.getRetweetedStatusId() != null) {
-                                            log.debug("Retweeting: " + tweet.getText());
+                                            log.debug("Retweeting: " + text);
                                             twitter.retweetStatus(tweet.getRetweetedStatusId());
-                                        } else if (!tweet.getText().startsWith("@")){
-                                            log.debug("Tweeting: " + tweet.getText());
-                                            twitter.updateStatus(tweet.getText());
+                                        } else if (!text.startsWith("@")){
+                                            log.debug("Tweeting: " + text);
+                                            twitter.updateStatus(text);
                                         }
                                     }
                                     try {

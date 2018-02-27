@@ -46,6 +46,8 @@ dependencies {
             'net.sf.supercsv:super-csv-joda:2.4.0',
             'com.squareup.okhttp3:okhttp:3.2.0',
             'com.google.code.gson:gson:2.6.2',
+            'org.jsoup:jsoup:1.+'
+
     )
 
     testCompile(
